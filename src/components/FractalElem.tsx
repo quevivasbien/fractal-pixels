@@ -1,9 +1,10 @@
 import React from "react";
 
-import { MandelProps, Mandelbrot } from "@/scripts/mandelbrot";
+import { getRandomMandelProps, Mandelbrot } from "@/scripts/mandelbrot";
 import GridImage from "./GridImage";
 
-export const FractalElem: React.FC<MandelProps> = (props) => {
+export const FractalElem: React.FC = () => {
+    const props = getRandomMandelProps();
     const mandelbrot = new Mandelbrot(props);
     const colorGrid = mandelbrot.paint();
     const colors = new Array(props.height * props.width);

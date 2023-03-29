@@ -14,14 +14,21 @@ export default class Pixel extends React.Component<PixelProps_, PixelProps> {
     }
 
     render() {
-        const { baseColor, color, filled, number, selected } = this.state;
-        const borderColor = selected ? 'border-red-800' : 'border-gray-200';
-        const hoverBorderColor = selected ? 'border-red-600' : 'border-gray-400';
+        const { baseColor, color, filled, number, selected, borders } = this.state;
+        const topBorder = borders.top ? 'border-t-gray-400' : 'border-t-gray-200';
+        const bottomBorder = borders.bottom ? 'border-b-gray-400' : 'border-b-gray-200';
+        const leftBorder = borders.left ? 'border-l-gray-400' : 'border-l-gray-200';
+        const rightBorder = borders.right ? 'border-r-gray-400' : 'border-r-gray-200';
+        const border = `${topBorder} ${bottomBorder} ${leftBorder} ${rightBorder}`;
         const cursorType = filled || selected || number !== '' ? 'cursor-pointer' : 'cursor';
-        const className = `flex justify-center items-center w-8 h-8 border ${borderColor} hover:${hoverBorderColor} ${cursorType} select-none`;
-        if (filled) {
+        const className = `flex justify-center items-center w-8 h-8 border ${border} hover:border-gray-400 ${cursorType} select-none`;
+        if (filled || selected) {
+            const style = {
+                backgroundColor: color,
+                color: Color.invertedHex(baseColor),
+            };
             return (
-                <div className={className} style={{ backgroundColor: color, color: Color.invertedHex(baseColor) }}>
+                <div className={className} style={style}>
                     {number}
                 </div>
             );

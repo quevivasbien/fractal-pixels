@@ -1,4 +1,4 @@
-import Color from "./colors";
+import Color, { getRandomPalette } from "./colors";
 
 class Complex {
     real: number;
@@ -21,17 +21,6 @@ class Complex {
     }
 }
 
-const DEFAULT_PALETTE = [
-    Color.fromHex("#000000"),
-    Color.fromHex("#0000FF"),
-    Color.fromHex("#00FF00"),
-    Color.fromHex("#00FFFF"),
-    Color.fromHex("#FF0000"),
-    Color.fromHex("#FF00FF"),
-    Color.fromHex("#FFFF00"),
-    // Color.fromHex("#FFFFFF"),
-];
-
 export interface MandelProps {
     x0: number;
     y0: number;
@@ -39,6 +28,7 @@ export interface MandelProps {
     height: number;
     pixelSize: number;  // distance in complex plane per pixel
     maxIter: number;
+    palette: Color[];
 }
 
 export class Mandelbrot {
@@ -73,14 +63,54 @@ export class Mandelbrot {
         return result;
     }
 
-    paint(palette: Color[] = DEFAULT_PALETTE): Color[][] {
-        const cutoffs = palette.map((_, i) => (i + 1) * this.props.maxIter / palette.length);
-        return this.grid.map(row => row.map(i => {
+    paint(scale: number = 0.1): Color[][] {
+        const palette = this.props.palette;
+        const cutoffs = palette.map((_, i) => (i + 1) * Math.pow(this.props.maxIter, scale) / palette.length);
+        return this.grid.map(row => row.map(x => {
+            const scaledX = Math.pow(x, scale);
             let j = 0;
-            while (i > cutoffs[j]) {
+            while (scaledX > cutoffs[j]) {
                 j++;
             }
             return palette[j];
         }));
+    }
+}
+
+class Scene {
+    x0: number;
+    y0: number;
+    width: number;
+    height: number;
+    pixelSize: number;  // distance in complex plane per pixel
+
+    constructor(x0: number, y0: number, width: number, height: number, realWidth: number) {
+        this.x0 = x0;
+        this.y0 = y0;
+        this.width = width;
+        this.height = height;
+        this.pixelSize = realWidth / width;
+    }
+}
+
+const SCENES: Scene[] = [
+    new Scene(-2, -1.5, 20, 20, 3),
+    new Scene(-2, -1.5, 30, 30, 3),
+    new Scene(-2, -1.5, 40, 40, 3),
+    new Scene(-1, -1, 30, 30, 1),
+    new Scene(0.15, 0, 20, 30, 0.5),
+];
+
+
+export function getRandomMandelProps(): MandelProps {
+    const scene = SCENES[Math.floor(Math.random() * SCENES.length)];
+    return {
+        x0: scene.x0,
+        y0: scene.y0,
+        width: scene.width,
+        height: scene.height,
+        pixelSize: scene.pixelSize,
+        maxIter: 100,
+        palette: getRandomPalette(),
     }
 }

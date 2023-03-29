@@ -1,10 +1,38 @@
-export interface PixelProps {
+interface PixelBorders {
+    top: boolean;
+    bottom: boolean;
+    left: boolean;
+    right: boolean;
+}
+const DEFAULT_BORDERS: PixelBorders = {
+    top: false,
+    bottom: false,
+    left: false,
+    right: false,
+};
+
+
+export class PixelProps {
     baseColor: string;
     color: string;
     filled: boolean;
     number: string;
     selected: boolean;
     holdsBlock?: BlockBounds;
+    borders: PixelBorders = {...DEFAULT_BORDERS};
+
+    constructor(baseColor: string, color: string = "#ffffff", filled: boolean = false, number: string = "?", selected: boolean = false) {
+        this.baseColor = baseColor;
+        this.color = color;
+        this.filled = filled;
+        this.number = number;
+        this.selected = selected;
+    }
+
+    getKey(): string {
+        const borderKey = (this.borders.top ? "1" : "0") + (this.borders.bottom ? "1" : "0") + (this.borders.left ? "1" : "0") + (this.borders.right ? "1" : "0");
+        return this.baseColor + this.color + (this.filled ? "1" : "0") + this.number + (this.selected ? "1" : "0") + borderKey;
+    }
 }
 
 export class BlockBounds {
@@ -45,13 +73,7 @@ export default class RenderData {
 
     static fromColors(height: number, width: number, colors: string[]): RenderData {
         const pixels: PixelProps[] = colors.map((color) => {
-            return {
-                baseColor: color,
-                color: "#ffffff",
-                filled: false,
-                number: "?",
-                selected: false,
-            }
+            return new PixelProps(color);
         });
         return new RenderData(height, width, pixels);
     }
@@ -73,7 +95,7 @@ export default class RenderData {
             const x = index % this.width;
             const y = Math.floor(index / this.width);
             pixel.holdsBlock = new BlockBounds(x, y, x, y);
-            pixel.color = pixel.baseColor;
+            this.paintBlock(pixel.holdsBlock, pixel.baseColor);
         }
         while (true) {
             const seedIndex = this.randomEmptyIndex();
@@ -81,6 +103,39 @@ export default class RenderData {
                 break;
             }
             this.fillMaxBlock(seedIndex);
+        }
+    }
+
+    resetBorders(): void {
+        // clear existing borders
+        for (const pixel of this.pixels) {
+            pixel.borders = {...DEFAULT_BORDERS};
+        }
+        // redraw all borders
+        for (const pixel of this.pixels) {
+            if (pixel.holdsBlock) {
+                this.setBorders(pixel.holdsBlock);
+            }
+        }
+    }
+    setBorders(block: BlockBounds): void {
+        for (let i = Math.max(0, block.startY - 1); i <= Math.min(this.height - 1, block.endY + 1); i++) {
+            for (let j = Math.max(0, block.startX - 1); j <= Math.min(this.width - 1, block.endX + 1); j++) {
+                const index = i * this.width + j;
+                const pixel = this.pixels[index];
+                if (j >= block.startX && j <= block.endX && (i === block.startY || i === block.endY + 1)) {
+                    pixel.borders.top = true;
+                }
+                if (j >= block.startX && j <= block.endX && (i === block.endY || i === block.startY - 1)) {
+                    pixel.borders.bottom = true;
+                }
+                if (i >= block.startY && i <= block.endY && (j === block.startX || j === block.endX + 1)) {
+                    pixel.borders.left = true;
+                }
+                if (i >= block.startY && i <= block.endY && (j === block.endX || j === block.startX - 1)) {
+                    pixel.borders.right = true;
+                }
+            }
         }
     }
 
@@ -137,9 +192,8 @@ export default class RenderData {
         this.pixels[seedIndex].number = bestArea.toString();
         if (bestArea === 1) {
             const seedPixel = this.pixels[seedIndex];
-            seedPixel.filled = true;
-            seedPixel.color = seedPixel.baseColor;
             seedPixel.holdsBlock = bounds;
+            this.paintBlock(bounds, seedPixel.baseColor);
         }
     }
 

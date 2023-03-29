@@ -2,8 +2,7 @@ import React from "react";
 
 import RenderData, { BlockBounds } from "@/scripts/renderData";
 import Pixel from "@/components/Pixel";
-import Color from "@/scripts/colors";
-import { start } from "repl";
+import Color, { GRAY } from "@/scripts/colors";
 
 interface GridImageProps {
     height: number;
@@ -28,6 +27,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
     }
 
     render() {
+        this.state.renderData.resetBorders();
         const { height, width, pixels } = this.state.renderData;
         const rows = [];
         for (let y = 0; y < height; y++) {
@@ -35,10 +35,9 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             for (let x = 0; x < width; x++) {
                 const index = y * width + x;
                 const pixel = pixels[index];
-                const key = `${pixel.color}${pixel.filled ? 1 : 0}${pixel.number}${pixel.selected ? 1 : 0}`
                 row.push(
-                    <div key={`${x}${y}`} onMouseDown={() => this.onMouseDown(x, y)} onMouseOver={() => this.onMouseOver(x, y)}>
-                        <Pixel key={key} props={pixel} />
+                    <div key={`${x}`} onMouseDown={() => this.onMouseDown(x, y)} onMouseOver={() => this.onMouseOver(x, y)}>
+                        <Pixel key={pixel.getKey()} props={pixel} />
                     </div>
                 );
             }
@@ -87,14 +86,17 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             }
         }
         block = undefined;
+        renderData.resetBorders();
         this.setState({ renderData: renderData });
     }
 
+    // selection box is drawn when mouse is down and mouse is moved
     drawSelectBox() {
         if (this.state.selectStart === undefined || this.state.selectEnd === undefined) {
             throw new Error("selectStart or selectEnd is undefined");
         }
         const selectStart = this.state.selectStart;
+        const startPixel = this.state.renderData.pixels[selectStart];
 
         const renderData = this.state.renderData;
         
@@ -102,26 +104,25 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         const startJ = selectStart % renderData.width;
         const endI = Math.floor(this.state.selectEnd / renderData.width);
         const endJ = this.state.selectEnd % renderData.width;
-        const i0 = Math.min(startI, endI);
-        const i1 = Math.max(startI, endI);
-        const j0 = Math.min(startJ, endJ);
-        const j1 = Math.max(startJ, endJ);
+        const bounds = new BlockBounds(Math.min(startJ, endJ), Math.min(startI, endI), Math.max(startJ, endJ), Math.max(startI, endI));
+        startPixel.holdsBlock = bounds;
         for (let i = 0; i < renderData.height; i++) {
             for (let j = 0; j < renderData.width; j++) {
-                if (
-                    i >= i0 && i <= i1 &&
-                    j >= j0 && j <= j1
-                ) {
-                    renderData.pixels[i * renderData.width + j].selected = true;
+                const pixel = renderData.pixels[i * renderData.width + j];
+                if (bounds.contains(j, i)) {
+                    pixel.selected = true;
+                    pixel.color = bounds.area() === parseInt(startPixel.number) ? Color.lightenedHex(startPixel.baseColor, 50, 230) : GRAY.toHex();
                 }
                 else {
-                    renderData.pixels[i * renderData.width + j].selected = false;
+                    pixel.selected = false;
                 }
             }
         }
         this.setState({ renderData: renderData });
     }
 
+    // selection box is drawn when mouse is down and mouse is moved
+    // when mouse is released, the selection box is cleared
     clearSelectBox() {
         const renderData = this.state.renderData;
         // clear selection box
@@ -143,7 +144,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             Math.max(Math.floor(selectStart / renderData.width), Math.floor(selectEnd / renderData.width)),
         );
         const startPixel = renderData.pixels[selectStart];
-        const color = parseInt(startPixel.number) === block.area() ? startPixel.baseColor : Color.lightenedHex(startPixel.baseColor, 100, 230);
+        const color = parseInt(startPixel.number) === block.area() ? startPixel.baseColor : GRAY.toHex();
         renderData.paintBlock(block, color);
         startPixel.holdsBlock = block;
         // update state
