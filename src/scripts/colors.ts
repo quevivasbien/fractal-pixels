@@ -35,16 +35,28 @@ export default class Color {
         return Color.fromHex(hex).inverted().toHex();
     }
 
-    darkened(amount: number): Color {
+    darkened(amount: number, floor: number = 0): Color {
         return new Color(
-            Math.max(0, Math.floor(this.r * (1 - amount))),
-            Math.max(0, Math.floor(this.g * (1 - amount))),
-            Math.max(0, Math.floor(this.b * (1 - amount))),
+            Math.max(floor, Math.floor(this.r - amount)),
+            Math.max(floor, Math.floor(this.g - amount)),
+            Math.max(floor, Math.floor(this.b - amount)),
         );
     }
 
-    static darkenedHex(hex: string, amount: number): string {
-        return Color.fromHex(hex).darkened(amount).toHex();
+    static darkenedHex(hex: string, amount: number, floor: number = 0): string {
+        return Color.fromHex(hex).darkened(amount, floor).toHex();
+    }
+
+    lightened(amount: number, ceil: number = 255): Color {
+        return new Color(
+            Math.min(ceil, Math.floor(this.r + amount)),
+            Math.min(ceil, Math.floor(this.g + amount)),
+            Math.min(ceil, Math.floor(this.b + amount)),
+        );
+    }
+
+    static lightenedHex(hex: string, amount: number, ceil: number = 255): string {
+        return Color.fromHex(hex).lightened(amount, ceil).toHex();
     }
 
 }

@@ -3,27 +3,32 @@ import React from "react";
 import Color from "@/scripts/colors";
 import type { PixelProps } from "@/scripts/renderData";
 
+interface PixelProps_ {
+    props: PixelProps;
+}
 
-export default class Pixel extends React.Component<PixelProps, PixelProps> {
-    state = { color: this.props.color, filled: this.props.filled, number: this.props.number };
-    
-    onClick = () => {
-        // this.setState({ filled: !this.state.filled });
+export default class Pixel extends React.Component<PixelProps_, PixelProps> {
+    constructor(props_: PixelProps_) {
+        super(props_);
+        this.state = props_.props;
     }
 
     render() {
-        const { color, filled, number } = this.state;
-        const className = `flex justify-center items-center w-8 h-8 border border-gray-200 hover:border-gray-700 ${number !== '' ? 'cursor-pointer' : 'cursor'} select-none`;
+        const { baseColor, color, filled, number, selected } = this.state;
+        const borderColor = selected ? 'border-red-800' : 'border-gray-200';
+        const hoverBorderColor = selected ? 'border-red-600' : 'border-gray-400';
+        const cursorType = filled || selected || number !== '' ? 'cursor-pointer' : 'cursor';
+        const className = `flex justify-center items-center w-8 h-8 border ${borderColor} hover:${hoverBorderColor} ${cursorType} select-none`;
         if (filled) {
             return (
-                <div className={className} style={{ backgroundColor: color, color: Color.invertedHex(color) }}>
+                <div className={className} style={{ backgroundColor: color, color: Color.invertedHex(baseColor) }}>
                     {number}
                 </div>
             );
         }
         else {
             return (
-                <div className={className} style={{ backgroundColor: "white", color: Color.darkenedHex(color, 0.3) }} onClick={this.onClick}>
+                <div className={className} style={{ color: Color.darkenedHex(baseColor, 50) }} >
                     {number}
                 </div>
             );

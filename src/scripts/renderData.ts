@@ -1,14 +1,35 @@
 export interface PixelProps {
+    baseColor: string;
     color: string;
     filled: boolean;
     number: string;
+    selected: boolean;
+    holdsBlock?: BlockBounds;
 }
 
-interface BlockBounds {
+export class BlockBounds {
     startX: number;
     startY: number;
     endX: number;
     endY: number;
+
+    constructor(startX: number, startY: number, endX: number, endY: number) {
+        if (startX > endX || startY > endY) {
+            throw new Error("Invalid block bounds");
+        }
+        this.startX = startX;
+        this.startY = startY;
+        this.endX = endX;
+        this.endY = endY;
+    }
+
+    area(): number {
+        return (1 + this.endX - this.startX) * (1 + this.endY - this.startY);
+    }
+
+    contains(x: number, y: number): boolean {
+        return this.startX <= x && x <= this.endX && this.startY <= y && y <= this.endY;
+    }
 }
 
 export default class RenderData {
@@ -16,20 +37,27 @@ export default class RenderData {
     width: number;
     pixels: PixelProps[];
 
-    constructor(height: number, width: number, colors: string[]) {
+    constructor(height: number, width: number, pixels: PixelProps[]) {
         this.height = height;
         this.width = width;
-        this.pixels = colors.map((color) => {
+        this.pixels = pixels;
+    }
+
+    static fromColors(height: number, width: number, colors: string[]): RenderData {
+        const pixels: PixelProps[] = colors.map((color) => {
             return {
-                color: color,
+                baseColor: color,
+                color: "#ffffff",
                 filled: false,
                 number: "?",
+                selected: false,
             }
         });
+        return new RenderData(height, width, pixels);
     }
 
     static initImage(height: number, width: number, colors: string[]): RenderData {
-        const renderData = new RenderData(height, width, colors);
+        const renderData = RenderData.fromColors(height, width, colors);
         renderData.init();
         return renderData;
     }
@@ -38,8 +66,14 @@ export default class RenderData {
         const nSingleBlocks = Math.floor(this.width * this.height * 0.02);
         for (let i = 0; i < nSingleBlocks; i++) {
             const index = Math.floor(Math.random() * this.pixels.length);
-            this.pixels[index].number = "1";
-            this.pixels[index].filled = true;
+            const pixel = this.pixels[index];
+            pixel.number = "1";
+            pixel.filled = true;
+            pixel.color = pixel.baseColor;
+            const x = index % this.width;
+            const y = Math.floor(index / this.width);
+            pixel.holdsBlock = new BlockBounds(x, y, x, y);
+            pixel.color = pixel.baseColor;
         }
         while (true) {
             const seedIndex = this.randomEmptyIndex();
@@ -47,6 +81,18 @@ export default class RenderData {
                 break;
             }
             this.fillMaxBlock(seedIndex);
+        }
+    }
+
+    paintBlock(block: BlockBounds, color: string, fill = true): void {
+        for (let i = block.startY; i <= block.endY; i++) {
+            for (let j = block.startX; j <= block.endX; j++) {
+                const index = i * this.width + j;
+                this.pixels[index].color = color;
+                if (fill) {
+                    this.pixels[index].filled = true;
+                }
+            }
         }
     }
 
@@ -90,42 +136,45 @@ export default class RenderData {
         this.clearBlock(bounds);
         this.pixels[seedIndex].number = bestArea.toString();
         if (bestArea === 1) {
-            this.pixels[seedIndex].filled = true;
+            const seedPixel = this.pixels[seedIndex];
+            seedPixel.filled = true;
+            seedPixel.color = seedPixel.baseColor;
+            seedPixel.holdsBlock = bounds;
         }
     }
 
     private getBlockBounds(seedIndex: number, bestIndex: number, fromDirection: string): BlockBounds {
         if (fromDirection === "tl") {
-            return {
-                startX: seedIndex % this.width,
-                startY: Math.floor(seedIndex / this.width),
-                endX: bestIndex % this.width,
-                endY: Math.floor(bestIndex / this.width),
-            };
+            return new BlockBounds(
+                seedIndex % this.width,
+                Math.floor(seedIndex / this.width),
+                bestIndex % this.width,
+                Math.floor(bestIndex / this.width),
+            );
         }
         if (fromDirection === "tr") {
-            return {
-                startX: bestIndex % this.width,
-                startY: Math.floor(seedIndex / this.width),
-                endX: seedIndex % this.width,
-                endY: Math.floor(bestIndex / this.width),
-            };
+            return new BlockBounds(
+                bestIndex % this.width,
+                Math.floor(seedIndex / this.width),
+                seedIndex % this.width,
+                Math.floor(bestIndex / this.width),
+            );
         }
         if (fromDirection === "bl") {
-            return {
-                startX: seedIndex % this.width,
-                startY: Math.floor(bestIndex / this.width),
-                endX: bestIndex % this.width,
-                endY: Math.floor(seedIndex / this.width),
-            };
+            return new BlockBounds(
+                seedIndex % this.width,
+                Math.floor(bestIndex / this.width),
+                bestIndex % this.width,
+                Math.floor(seedIndex / this.width),
+            );
         }
         if (fromDirection === "br") {
-            return {
-                startX: bestIndex % this.width,
-                startY: Math.floor(bestIndex / this.width),
-                endX: seedIndex % this.width,
-                endY: Math.floor(seedIndex / this.width),
-            };
+            return new BlockBounds(
+                bestIndex % this.width,
+                Math.floor(bestIndex / this.width),
+                seedIndex % this.width,
+                Math.floor(seedIndex / this.width),
+            );
         }
         throw new Error("Invalid fromDirection");
     }
@@ -134,18 +183,18 @@ export default class RenderData {
         for (let i = 0; i < this.width; i++) {
             for (let j = 0; j < this.height; j++) {
                 // continue if pixel not in the rectangle
-                if (i < bounds.startX || i > bounds.endX || j < bounds.startY || j > bounds.endY) {
+                if (!bounds.contains(i, j)) {
                     continue;
                 }
                 const index = j * this.width + i;
-                this.pixels[index].number = "";  // mark as not ?
+                this.pixels[index].number = "";
             }
         }
     }
 
     private getRightNeighborIndex(index: number): number {
         const next = index + 1;
-        if (next % this.width === 0 || this.pixels[next].number !== "?" || this.pixels[next].color !== this.pixels[index].color) {
+        if (next % this.width === 0 || this.pixels[next].number !== "?" || this.pixels[next].baseColor !== this.pixels[index].baseColor) {
             // reached end of row or next pixel is filled
             return -1;
         }
@@ -154,7 +203,7 @@ export default class RenderData {
     
     private getLeftNeighborIndex(index: number): number {
         const next = index - 1;
-        if (next < 0 || next % this.width === this.width - 1 || this.pixels[next].number !== "?" || this.pixels[next].color !== this.pixels[index].color) {
+        if (next < 0 || next % this.width === this.width - 1 || this.pixels[next].number !== "?" || this.pixels[next].baseColor !== this.pixels[index].baseColor) {
             // reached end of row or next pixel is filled
             return -1;
         }
@@ -163,7 +212,7 @@ export default class RenderData {
     
     private getBottomNeighborIndex(index: number): number {
         const next = index + this.width;
-        if (next >= this.width * this.height || this.pixels[next].number !== "?" || this.pixels[next].color !== this.pixels[index].color) {
+        if (next >= this.width * this.height || this.pixels[next].number !== "?" || this.pixels[next].baseColor !== this.pixels[index].baseColor) {
             // reached end of column or next pixel is filled
             return -1;
         }
@@ -172,7 +221,7 @@ export default class RenderData {
     
     private getTopNeighborIndex(index: number): number {
         const next = index - this.width;
-        if (next < 0 || this.pixels[next].number !== "?" || this.pixels[next].color !== this.pixels[index].color) {
+        if (next < 0 || this.pixels[next].number !== "?" || this.pixels[next].baseColor !== this.pixels[index].baseColor) {
             // reached end of column or next pixel is filled
             return -1;
         }

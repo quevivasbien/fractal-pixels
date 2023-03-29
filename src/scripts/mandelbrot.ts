@@ -29,7 +29,7 @@ const DEFAULT_PALETTE = [
     Color.fromHex("#FF0000"),
     Color.fromHex("#FF00FF"),
     Color.fromHex("#FFFF00"),
-    Color.fromHex("#FFFFFF"),
+    // Color.fromHex("#FFFFFF"),
 ];
 
 export interface MandelProps {
