@@ -25,7 +25,7 @@ export default class Pixel extends React.Component<PixelProps_, PixelProps> {
         if (filled || selected) {
             const style = {
                 backgroundColor: color,
-                color: Color.invertedHex(baseColor),
+                color: Color.invertedHex(color),
             };
             return (
                 <div className={className} style={style}>

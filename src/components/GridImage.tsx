@@ -64,18 +64,25 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         this.setState({ selectStart: index, selectEnd: index }, this.drawSelectBox);
     }
 
+    getBlockHolderIndex(x: number, y: number): number {
+        // finds the block that contains the pixel at (x, y)
+        const pixels = this.state.renderData.pixels;
+        for (let i = 0; i < pixels.length; i++) {
+            const pixel = pixels[i];
+            if (pixel.holdsBlock !== undefined && pixel.holdsBlock.contains(x, y)) {
+                return i;
+            }
+        }
+        throw new Error("no block found");
+    }
+
     unfillBlock(x: number, y: number) {
         // find the block that contains the pixel at (x, y)
         const renderData = this.state.renderData;
-        let block: BlockBounds | undefined;
-        for (let pixel of renderData.pixels) {
-            if (pixel.holdsBlock !== undefined && pixel.holdsBlock.contains(x, y)) {
-                block = pixel.holdsBlock;
-                break;
-            }
-        }
+        let blockHolderIndex = this.getBlockHolderIndex(x, y)
+        const block = renderData.pixels[blockHolderIndex].holdsBlock;
         if (block === undefined) {
-            throw new Error("block is undefined");
+            throw new Error("this should never happen!");
         }
         // unfill the block
         for (let i = block.startY; i <= block.endY; i++) {
@@ -85,15 +92,17 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
                 pixel.filled = false;
             }
         }
-        block = undefined;
-        renderData.resetBorders();
+        // clear the block holder
+        renderData.pixels[blockHolderIndex].holdsBlock = undefined;
         this.setState({ renderData: renderData });
     }
 
     // selection box is drawn when mouse is down and mouse is moved
     drawSelectBox() {
         if (this.state.selectStart === undefined || this.state.selectEnd === undefined) {
-            throw new Error("selectStart or selectEnd is undefined");
+            // wait a bit and retry
+            setTimeout(() => this.drawSelectBox(), 100);
+            return;
         }
         const selectStart = this.state.selectStart;
         const startPixel = this.state.renderData.pixels[selectStart];
