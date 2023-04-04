@@ -83,6 +83,10 @@ const PALETTES: Palette[] = [
     Palette.fromHexes(["bce7fd","c492b1","af3b6e","424651","21fa90"]),
 ];
 
+export function getPalette(index: number = 0): Color[] {
+    return PALETTES[index].colors;
+}
+
 export function getRandomPalette(): Color[] {
     return PALETTES[Math.floor(Math.random() * PALETTES.length)].colors;
 }

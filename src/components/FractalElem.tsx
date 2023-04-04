@@ -3,7 +3,11 @@ import React from "react";
 import { getRandomMandelProps, Mandelbrot } from "@/scripts/mandelbrot";
 import GridImage from "./GridImage";
 
-export const FractalElem: React.FC = () => {
+interface FractalElemProps {
+    level: string;
+}
+
+export const FractalElem: React.FC<FractalElemProps> = ({ level }) => {
     
     // wait for the window to load before rendering the fractal
     // other we get errors with hydration
@@ -15,7 +19,7 @@ export const FractalElem: React.FC = () => {
         return <div></div>;
     }
 
-    const props = getRandomMandelProps();
+    const props = getRandomMandelProps(level);
     const mandelbrot = new Mandelbrot(props);
     const colorGrid = mandelbrot.paint();
     const colors = new Array(props.height * props.width);

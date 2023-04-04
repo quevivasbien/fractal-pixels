@@ -93,17 +93,24 @@ class Scene {
     }
 }
 
-const SCENES: Scene[] = [
-    new Scene(-2, -1.5, 20, 20, 3),
-    new Scene(-2, -1.5, 30, 30, 3),
-    new Scene(-2, -1.5, 40, 40, 3),
-    new Scene(-1, -1, 30, 30, 1),
-    new Scene(0.15, 0, 20, 30, 0.5),
-];
+const SCENES: Record<string, Scene[]> = {
+    'easy': [
+        new Scene(-2, -1.5, 20, 20, 3),
+        new Scene(0.15, 0, 20, 30, 0.5),
+    ],
+    'medium': [
+        new Scene(-2, -1.5, 30, 30, 3),
+        new Scene(-1, -1, 30, 30, 1),
+    ],
+    'hard': [
+        new Scene(-2, -1.5, 40, 40, 3),
+    ]
+};
 
 
-export function getRandomMandelProps(): MandelProps {
-    const scene = SCENES[Math.floor(Math.random() * SCENES.length)];
+export function getRandomMandelProps(difficulty: string): MandelProps {
+    const scenesList = SCENES[difficulty];
+    const scene = scenesList[Math.floor(Math.random() * scenesList.length)];
     return {
         x0: scene.x0,
         y0: scene.y0,
