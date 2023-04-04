@@ -4,6 +4,17 @@ import { getRandomMandelProps, Mandelbrot } from "@/scripts/mandelbrot";
 import GridImage from "./GridImage";
 
 export const FractalElem: React.FC = () => {
+    
+    // wait for the window to load before rendering the fractal
+    // other we get errors with hydration
+    const [hydrated, setHydrated] = React.useState(false);
+    React.useEffect(() => {
+        setHydrated(true);
+    });
+    if (!hydrated) {
+        return <div></div>;
+    }
+
     const props = getRandomMandelProps();
     const mandelbrot = new Mandelbrot(props);
     const colorGrid = mandelbrot.paint();

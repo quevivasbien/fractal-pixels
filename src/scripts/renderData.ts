@@ -13,12 +13,13 @@ const DEFAULT_BORDERS: PixelBorders = {
 
 
 export class PixelProps {
-    baseColor: string;
-    color: string;
+    baseColor: string;  // color of the pixel if correctly filled
+    color: string;  // color of the pixel to be displayed
     filled: boolean;
-    number: string;
+    number: string; // number to be displayed on the pixel
     selected: boolean;
-    holdsBlock?: BlockBounds;
+    holdsBlock?: BlockBounds;  // if a numbered pixel, the block it holds, if any
+    correctSelection?: boolean;  // if a numbered pixel, whether the current selection area matches the block number
     borders: PixelBorders = {...DEFAULT_BORDERS};
 
     constructor(baseColor: string, color: string = "#ffffff", filled: boolean = false, number: string = "?", selected: boolean = false) {
@@ -90,6 +91,7 @@ export default class RenderData {
             const index = Math.floor(Math.random() * this.pixels.length);
             const pixel = this.pixels[index];
             pixel.number = "1";
+            pixel.correctSelection = true;
             pixel.filled = true;
             pixel.color = pixel.baseColor;
             const x = index % this.width;
@@ -189,11 +191,15 @@ export default class RenderData {
         
         const bounds = this.getBlockBounds(seedIndex, bestIndex, fromDirection);
         this.clearBlock(bounds);
-        this.pixels[seedIndex].number = bestArea.toString();
+        const seedPixel = this.pixels[seedIndex];
+        seedPixel.number = bestArea.toString();
         if (bestArea === 1) {
-            const seedPixel = this.pixels[seedIndex];
             seedPixel.holdsBlock = bounds;
+            seedPixel.correctSelection = true;
             this.paintBlock(bounds, seedPixel.baseColor);
+        }
+        else {
+            seedPixel.correctSelection = false;
         }
     }
 

@@ -2,6 +2,7 @@ import React from "react";
 
 import RenderData, { BlockBounds } from "@/scripts/renderData";
 import Pixel from "@/components/Pixel";
+import SizeIndicator from "@/components/SizeIndicator";
 import Color, { GRAY } from "@/scripts/colors";
 
 interface GridImageProps {
@@ -14,6 +15,7 @@ interface GridImageState {
     renderData: RenderData;
     selectStart?: number;
     selectEnd?: number;
+    selectSize?: number;
 }
 
 export default class GridImage extends React.Component<GridImageProps, GridImageState> {
@@ -36,18 +38,37 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
                 const index = y * width + x;
                 const pixel = pixels[index];
                 row.push(
-                    <div key={`${x}`} onMouseDown={() => this.onMouseDown(x, y)} onMouseOver={() => this.onMouseOver(x, y)}>
+                    <div
+                        key={`${x}`}
+                        onMouseDown={() => this.onMouseDown(x, y)}
+                        onMouseOver={() => this.onMouseOver(x, y)}
+                    >
                         <Pixel key={pixel.getKey()} props={pixel} />
                     </div>
                 );
             }
             rows.push(<div key={y} className="flex">{row}</div>);
         }
-        return (
+        const grid = (
             <div onMouseUp={() => this.onMouseUp()}>
                 {rows}
             </div>
         );
+        if (this.state.selectSize !== undefined) {
+            return (
+                <div>
+                    {grid}
+                    <SizeIndicator width={10} height={10} size={this.state.selectSize} />
+                </div>
+            );
+        }
+        else {
+            return (
+                <div onMouseUp={() => this.onMouseUp()}>
+                    {rows}
+                </div>
+            );
+        }
     }
 
     onMouseDown(x: number, y: number) {
@@ -127,7 +148,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
                 }
             }
         }
-        this.setState({ renderData: renderData });
+        this.setState({ renderData: renderData, selectSize: bounds.area() });
     }
 
     // selection box is drawn when mouse is down and mouse is moved
@@ -146,18 +167,25 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         if (selectStart === undefined || selectEnd === undefined) {
             throw new Error("selectStart or selectEnd shouldn't be undefined here");
         }
-        const block = new BlockBounds(
+        const bounds = new BlockBounds(
             Math.min(selectStart % renderData.width, selectEnd % renderData.width),
             Math.min(Math.floor(selectStart / renderData.width), Math.floor(selectEnd / renderData.width)),
             Math.max(selectStart % renderData.width, selectEnd % renderData.width),
             Math.max(Math.floor(selectStart / renderData.width), Math.floor(selectEnd / renderData.width)),
         );
         const startPixel = renderData.pixels[selectStart];
-        const color = parseInt(startPixel.number) === block.area() ? startPixel.baseColor : GRAY.toHex();
-        renderData.paintBlock(block, color);
-        startPixel.holdsBlock = block;
+        const correct = bounds.area() === parseInt(startPixel.number);
+        startPixel.correctSelection = correct;
+        const color = correct ? startPixel.baseColor : GRAY.toHex();
+        renderData.paintBlock(bounds, color);
+        startPixel.holdsBlock = bounds;
         // update state
-        this.setState({ selectStart: undefined, selectEnd: undefined, renderData: renderData });
+        this.setState({ selectStart: undefined, selectEnd: undefined, selectSize: undefined, renderData: renderData });
+        // check if puzzle is solved
+        if (this.puzzleComplete()) {
+            console.log("puzzle complete!");
+            // todo: handle puzzle complete
+        }
     }
 
     onMouseOver(x: number, y: number) {
@@ -198,5 +226,18 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             return;
         }
         this.clearSelectBox();
+    }
+
+    puzzleComplete(): boolean {
+        const renderData = this.state.renderData;
+        for (let pixel of renderData.pixels) {
+            if (pixel.number !== '') {
+                // pixel is a seed pixel
+                if (!pixel.correctSelection) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 }

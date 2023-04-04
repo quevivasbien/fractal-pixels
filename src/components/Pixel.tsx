@@ -21,7 +21,7 @@ export default class Pixel extends React.Component<PixelProps_, PixelProps> {
         const rightBorder = borders.right ? 'border-r-gray-400' : 'border-r-gray-200';
         const border = `${topBorder} ${bottomBorder} ${leftBorder} ${rightBorder}`;
         const cursorType = filled || selected || number !== '' ? 'cursor-pointer' : 'cursor';
-        const className = `flex justify-center items-center w-8 h-8 border ${border} hover:border-gray-400 ${cursorType} select-none`;
+        const className = `flex justify-center items-center w-8 h-8 border ${border} hover:border-gray-600 ${cursorType} select-none`;
         if (filled || selected) {
             const style = {
                 backgroundColor: color,

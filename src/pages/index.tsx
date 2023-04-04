@@ -1,3 +1,4 @@
+import SizeIndicator from "@/components/SizeIndicator";
 import FractalElem from "../components/FractalElem";
 
 const width = 20;
