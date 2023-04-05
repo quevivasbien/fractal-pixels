@@ -30,9 +30,13 @@ export default function SelectPuzzle() {
                         <input type="radio" name="levelSelect" value="hard" />
                         <span>Hard</span>
                     </label>
+                    <label className="space-x-2" onClick={() => setButtonEnabled(true)}>
+                        <input type="radio" name="levelSelect" value="expert" />
+                        <span>Expert</span>
+                    </label>
                 </div>
                 <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition-transform duration-300 disabled:opacity-25 disabled:bg-blue-500" type="submit" disabled={!buttonEnabled}>
-                    Play &#10140;
+                    Play &#8594;
                 </button>
             </form>
         </div>

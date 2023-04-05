@@ -6,6 +6,7 @@ interface FlashingTitleProps {
     text: string;
     colors: Color[];
     flashInterval: number;  // interval in ms between color changes
+    size: string; // text size, e.g. "3xl"
 }
 
 export default function FlashingTitle(props: FlashingTitleProps) {
@@ -38,7 +39,7 @@ export default function FlashingTitle(props: FlashingTitleProps) {
     setTimeout(() => { setCurrentIndex((currentIndex + 1) % colors.length) }, props.flashInterval);
     
     return (
-        <div className="text-3xl">
+        <div className={`text-${props.size}`}>
             {chars}
         </div>
     )

@@ -30,7 +30,7 @@ export const FractalElem: React.FC<FractalElemProps> = ({ level }) => {
         }
     }
     return (
-        <GridImage height={props.height} width={props.width} colors={colors} />
+        <GridImage height={props.height} width={props.width} colors={colors} hideBackToMenu={level === "tutorial"} />
     )
 }
 

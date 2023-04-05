@@ -63,7 +63,7 @@ export class Mandelbrot {
         return result;
     }
 
-    paint(scale: number = 0.1): Color[][] {
+    paint(scale: number = 1.): Color[][] {
         const palette = this.props.palette;
         const cutoffs = palette.map((_, i) => (i + 1) * Math.pow(this.props.maxIter, scale) / palette.length);
         return this.grid.map(row => row.map(x => {
@@ -94,16 +94,35 @@ class Scene {
 }
 
 const SCENES: Record<string, Scene[]> = {
+    'tutorial': [
+        new Scene(-2, -1.5, 5, 5, 3),
+    ],
     'easy': [
         new Scene(-2, -1.5, 20, 20, 3),
+        new Scene(-0.171, 1.02, 20, 20, 0.025),
+        new Scene(-1.5, -0.1, 20, 20, 0.2),
+        new Scene(-0.6765, 0.4354, 20, 20, 0.003),
     ],
     'medium': [
-        new Scene(0.15, 0, 20, 30, 0.5),
         new Scene(-2, -1.5, 30, 30, 3),
-        new Scene(-1, -1, 30, 30, 1),
+        new Scene(-0.795, -0.15, 30, 30, 0.01),
+        new Scene(-0.4, 0.6, 30, 30, 0.08),
+        new Scene(-0.171, 1.02, 30, 30, 0.025),
+        new Scene(0.39, 0.125, 20, 30, 0.01),
     ],
     'hard': [
         new Scene(-2, -1.5, 40, 40, 3),
+        new Scene(-0.795, -0.15, 40, 40, 0.01),
+        new Scene(-0.4, 0.6, 40, 40, 0.08),
+        new Scene(-0.171, 1.02, 40, 40, 0.025),
+        new Scene(-1.5, -0.1, 40, 40, 0.2)
+    ],
+    'expert': [
+        new Scene(-0.5, 0.4, 50, 50, 0.75),
+        new Scene(-0.171, 1.02, 50, 50, 0.025),
+        new Scene(-0.795, -0.15, 40, 40, 0.01),
+        new Scene(0.39, 0.125, 40, 60, 0.01),
+        new Scene(-1.5, -0.1, 60, 60, 0.2)
     ]
 };
 

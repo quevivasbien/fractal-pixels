@@ -1,7 +1,6 @@
 import React from "react";
 
 import RenderData from "@/scripts/renderData";
-import Color from "@/scripts/colors";
 import Pixel from "./Pixel";
 
 interface StaticPixelProps {
@@ -11,7 +10,7 @@ interface StaticPixelProps {
 function StaticPixel(props: StaticPixelProps) {
     const { color } = props;
     return (
-        <div className="flex justify-center items-center w-8 h-8 cursor-none select-none" style={{ background: Color.darkenedHex(color, 50) }} />
+        <div className="flex justify-center items-center w-8 h-8 cursor-default select-none" style={{ backgroundColor: color }} />
     );
 }
 
@@ -72,7 +71,7 @@ export function getCompleteGridImage(renderData: RenderData, timeStamp: string) 
     });
     const staticPixels = pixels.map((pixel, i) => {
         return (
-            <StaticPixel key={`stat${i}`} color={pixel.color} />
+            <StaticPixel key={`stat${i}`} color={pixel.baseColor} />
         );
     });
 

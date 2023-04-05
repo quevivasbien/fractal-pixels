@@ -11,6 +11,7 @@ interface GridImageProps {
     height: number;
     width: number;
     colors: string[];
+    hideBackToMenu?: boolean;
 }
 
 interface GridImageState {
@@ -37,10 +38,13 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         if (this.state.complete) {
             return (
                 <div>
-                    {getCompleteGridImage(this.state.renderData, this.timeElapsed())}
-                    <div className="p-4 m-4 text-center">
-                        <Link className="p-4 border rounded-lg bg-gray-100 hover:bg-white shadow-sm hover:shadow-none hover:text-gray-500" href="/">Play again</Link>
+                    <div className="content-center items-center text-center">
+                        {getCompleteGridImage(this.state.renderData, this.timeElapsed())}
                     </div>
+                    
+                    {this.props.hideBackToMenu ? null : <div className="p-4 m-4 text-center">
+                        <Link className="p-4 border rounded-lg bg-gray-100 hover:bg-white shadow-sm hover:shadow-none hover:text-gray-500" href="/">&#8592; Back to menu</Link>
+                    </div>}
                 </div>
             );
         }
@@ -55,8 +59,9 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
                 row.push(
                     <div
                         key={`${x}`}
-                        onMouseDown={() => this.onMouseDown(x, y)}
+                        onMouseDown={(e) => this.onMouseDown(e, x, y)}
                         onMouseOver={() => this.onMouseOver(x, y)}
+                        onContextMenu={(e) => { e.preventDefault(); }}
                     >
                         <Pixel key={pixel.getKey()} props={pixel} />
                     </div>
@@ -97,17 +102,20 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         }
     }
 
-    onMouseDown(x: number, y: number) {
+    onMouseDown(e: React.MouseEvent, x: number, y: number) {
         const renderData = this.state.renderData;
         const index = x + renderData.width * y;
         const pixel = renderData.pixels[index];
         if (pixel.filled) {
-            this.unfillBlock(x, y);
+            // if right click, unselect, o.w. set new selection
+            this.unfillBlock(x, y, e.button !== 2);
+            return;
         }
         if (pixel.number === '') {
             // don't allow select of non-numbered pixels
             return;
         }
+        // pixel is numbered and unfilled, so start a new selection
         this.setState({ selectStart: index, selectEnd: index }, this.drawSelectBox);
     }
 
@@ -123,7 +131,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         throw new Error("no block found");
     }
 
-    unfillBlock(x: number, y: number) {
+    unfillBlock(x: number, y: number, setAsSelection: boolean = false) {
         // find the block that contains the pixel at (x, y)
         const renderData = this.state.renderData;
         let blockHolderIndex = this.getBlockHolderIndex(x, y)
@@ -141,7 +149,20 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         }
         // clear the block holder
         renderData.pixels[blockHolderIndex].holdsBlock = undefined;
-        this.setState({ renderData: renderData });
+
+        if (setAsSelection) {
+            this.setState(
+                {
+                    selectStart: blockHolderIndex,
+                    selectEnd: blockHolderIndex,
+                    renderData: renderData
+                },
+                this.drawSelectBox
+            );
+        }
+        else {
+            this.setState({ renderData: renderData });
+        }
     }
 
     // selection box is drawn when mouse is down and mouse is moved
@@ -160,14 +181,21 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         const startJ = selectStart % renderData.width;
         const endI = Math.floor(this.state.selectEnd / renderData.width);
         const endJ = this.state.selectEnd % renderData.width;
-        const bounds = new BlockBounds(Math.min(startJ, endJ), Math.min(startI, endI), Math.max(startJ, endJ), Math.max(startI, endI));
+        const bounds = new BlockBounds(
+            Math.min(startJ, endJ), Math.min(startI, endI),
+            Math.max(startJ, endJ), Math.max(startI, endI)
+        );
         startPixel.holdsBlock = bounds;
         for (let i = 0; i < renderData.height; i++) {
             for (let j = 0; j < renderData.width; j++) {
                 const pixel = renderData.pixels[i * renderData.width + j];
                 if (bounds.contains(j, i)) {
                     pixel.selected = true;
-                    pixel.color = bounds.area() === parseInt(startPixel.number) ? Color.lightenedHex(startPixel.baseColor, 50, 230) : GRAY.toHex();
+                    pixel.color = (
+                        bounds.area() === parseInt(startPixel.number) ?
+                            Color.lightenedHex(startPixel.baseColor, 50, 230)
+                            : GRAY.toHex()
+                    );
                 }
                 else {
                     pixel.selected = false;
@@ -206,7 +234,12 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         renderData.paintBlock(bounds, color);
         startPixel.holdsBlock = bounds;
         // update state
-        this.setState({ selectStart: undefined, selectEnd: undefined, selectSize: undefined, renderData: renderData });
+        this.setState({
+            selectStart: undefined,
+            selectEnd: undefined, 
+            selectSize: undefined,
+            renderData: renderData,
+        });
         this.checkIfComplete();
     }
 
