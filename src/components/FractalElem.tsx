@@ -14,7 +14,7 @@ export const FractalElem: React.FC<FractalElemProps> = ({ level }) => {
     const [hydrated, setHydrated] = React.useState(false);
     React.useEffect(() => {
         setHydrated(true);
-    });
+    }, []);
     if (!hydrated) {
         return <div></div>;
     }

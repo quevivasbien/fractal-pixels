@@ -14,6 +14,7 @@
 
 # production
 /build
+/fractal-pixels
 
 # misc
 .DS_Store

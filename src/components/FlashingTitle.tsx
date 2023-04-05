@@ -15,7 +15,7 @@ export default function FlashingTitle(props: FlashingTitleProps) {
     const [hydrated, setHydrated] = React.useState(false);
     React.useEffect(() => {
         setHydrated(true);
-    });
+    }, []);
     if (!hydrated) {
         return <div className="text-3l">
             {props.text}

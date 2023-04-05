@@ -96,9 +96,9 @@ class Scene {
 const SCENES: Record<string, Scene[]> = {
     'easy': [
         new Scene(-2, -1.5, 20, 20, 3),
-        new Scene(0.15, 0, 20, 30, 0.5),
     ],
     'medium': [
+        new Scene(0.15, 0, 20, 30, 0.5),
         new Scene(-2, -1.5, 30, 30, 3),
         new Scene(-1, -1, 30, 30, 1),
     ],

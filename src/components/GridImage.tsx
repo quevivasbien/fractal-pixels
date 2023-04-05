@@ -1,9 +1,11 @@
 import React from "react";
+import Link from "next/link";
 
 import RenderData, { BlockBounds } from "@/scripts/renderData";
 import Pixel from "@/components/Pixel";
 import SizeIndicator from "@/components/SizeIndicator";
 import Color, { GRAY } from "@/scripts/colors";
+import { getCompleteGridImage } from "./CompleteGridImage";
 
 interface GridImageProps {
     height: number;
@@ -16,6 +18,9 @@ interface GridImageState {
     selectStart?: number;
     selectEnd?: number;
     selectSize?: number;
+    startTime: number;
+    endTime?: number;
+    complete: boolean;
 }
 
 export default class GridImage extends React.Component<GridImageProps, GridImageState> {
@@ -23,12 +28,22 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         super(props);
         this.state = {
             renderData: RenderData.initImage(props.height, props.width, props.colors),
-            selectStart: undefined,
-            selectEnd: undefined,
+            startTime: Date.now(),
+            complete: false,
         };
     }
 
     render() {
+        if (this.state.complete) {
+            return (
+                <div>
+                    {getCompleteGridImage(this.state.renderData, this.timeElapsed())}
+                    <div className="p-4 m-4 text-center">
+                        <Link className="p-4 border rounded-lg bg-gray-100 hover:bg-white shadow-sm hover:shadow-none hover:text-gray-500" href="/">Play again</Link>
+                    </div>
+                </div>
+            );
+        }
         this.state.renderData.resetBorders();
         const { height, width, pixels } = this.state.renderData;
         const rows = [];
@@ -63,11 +78,22 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             );
         }
         else {
-            return (
-                <div onMouseUp={() => this.onMouseUp()}>
-                    {rows}
-                </div>
-            );
+            return grid;
+        }
+    }
+
+    timeElapsed() {
+        const endTime = this.state.endTime ? this.state.endTime : Date.now();
+        const timeElapsed = endTime - this.state.startTime;
+        // format time elapsed as HH:MM:SS
+        const hours = Math.floor(timeElapsed / 1000 / 60 / 60);
+        const minutes = (Math.floor(timeElapsed / 1000 / 60) % 60).toString().padStart(2, '0');
+        const seconds = (Math.floor(timeElapsed / 1000) % 60).toString().padStart(2, '0');
+        if (hours > 0) {
+            return `${hours}:${minutes}:${seconds}`;
+        }
+        else {
+            return `${minutes}:${seconds}`;
         }
     }
 
@@ -181,11 +207,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         startPixel.holdsBlock = bounds;
         // update state
         this.setState({ selectStart: undefined, selectEnd: undefined, selectSize: undefined, renderData: renderData });
-        // check if puzzle is solved
-        if (this.puzzleComplete()) {
-            console.log("puzzle complete!");
-            // todo: handle puzzle complete
-        }
+        this.checkIfComplete();
     }
 
     onMouseOver(x: number, y: number) {
@@ -226,6 +248,13 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             return;
         }
         this.clearSelectBox();
+    }
+
+    checkIfComplete() {
+        if (this.puzzleComplete()) {
+            const endTime = Date.now();
+            this.setState({ complete: true, endTime: endTime });
+        }
     }
 
     puzzleComplete(): boolean {
