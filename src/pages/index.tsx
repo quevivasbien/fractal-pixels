@@ -11,10 +11,10 @@ export default function StartScreen()  {
       </div>
       <div className="border border-gray-200 rounded-lg space-y-4 m-8 p-8 text-center bg-gray-100">
         <FlashingTitle text="FractalPixels!" flashInterval={500} colors={getRandomPalette()} size="3xl" />
-        <SelectPuzzle />
-        <div className="pt-4">
+        <div className="py-4">
           <Link className="italic text-gray-600 hover:text-red-800 hover:font-bold" href="/learn">Learn to play</Link>
         </div>
+        <SelectPuzzle />
       </div>
     </div>
   )

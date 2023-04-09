@@ -59,8 +59,10 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
                 row.push(
                     <div
                         key={`${x}`}
-                        onMouseDown={(e) => this.onMouseDown(e, x, y)}
+                        onMouseDown={(e) => this.onMouseDown(x, y, e)}
+                        onTouchStart={() => this.onMouseDown(x, y)}
                         onMouseOver={() => this.onMouseOver(x, y)}
+                        onTouchMove={() => this.onMouseOver(x, y)}
                         onContextMenu={(e) => { e.preventDefault(); }}
                     >
                         <Pixel key={pixel.getKey()} props={pixel} />
@@ -70,7 +72,7 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
             rows.push(<div key={y} className="flex">{row}</div>);
         }
         const grid = (
-            <div onMouseUp={() => this.onMouseUp()}>
+            <div onMouseUp={() => this.onMouseUp()} onTouchEnd={() => this.onMouseUp()}>
                 {rows}
             </div>
         );
@@ -102,13 +104,14 @@ export default class GridImage extends React.Component<GridImageProps, GridImage
         }
     }
 
-    onMouseDown(e: React.MouseEvent, x: number, y: number) {
+    onMouseDown(x: number, y: number, e?: React.MouseEvent) {
         const renderData = this.state.renderData;
         const index = x + renderData.width * y;
         const pixel = renderData.pixels[index];
         if (pixel.filled) {
             // if right click, unselect, o.w. set new selection
-            this.unfillBlock(x, y, e.button !== 2);
+            const setAsSelection = e ? e.button !== 2 : true;
+            this.unfillBlock(x, y, setAsSelection);
             return;
         }
         if (pixel.number === '') {
